@@ -614,8 +614,8 @@ export const splitCssRules = (cssString) => {
 
 
 export const removeCssStyles = (id = "dynamic-css-styles") => {
-  const styleTag = document.getElementById(id);
-  if (styleTag) {
-    styleTag.remove();
+  const styleTag = document.querySelector(`style#${CSS.escape(id)}`);
+  if (styleTag && styleTag.parentNode) {
+    styleTag.parentNode.removeChild(styleTag);
   }
 };

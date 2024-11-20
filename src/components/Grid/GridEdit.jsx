@@ -17,32 +17,7 @@ const GridEdit = ({ data }) => {
 
   const { FieldType, Decimal, SelText, Event } = data?.typeObj?.Properties;
 
-  useEffect(() => {
-    const style = document.createElement("style");
-    style.innerHTML = `
-        input[type='number'] {
-        text-align: right;
-        }
-
-        input[type='number']:focus {
-          outline: none;
-          border-bottom: 2px solid blue !important;
-        }
-
-        input[type='date']:focus {
-          outline: none;
-        }
-
-        input[type='text']:focus {
-          outline: none;
-          border-bottom: 2px solid blue !important;
-        }
-    `;
-    document.head.appendChild(style);
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
+ 
 
 
   // console.log({value: data.value, focused: data.focused, datatype: data?.typeObj.ID, SelText})
