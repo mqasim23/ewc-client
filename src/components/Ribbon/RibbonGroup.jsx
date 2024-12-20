@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppData } from '../../hooks';
 import { excludeKeys, parseFlexStyles, rgbColor } from '../../utils';
 import SelectComponent from '../SelectComponent';
@@ -6,16 +6,19 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-bootstrap-ribbon/dist/react-bootstrap-ribbon.css';
 
 const CustomRibbonGroup = ({ data }) => {
-  const { findCurrentData, fontScale } = useAppData();
+  const { findCurrentData, fontScale, handleData } = useAppData();
   const updatedData = excludeKeys(data);
   const { Size, Title, BorderCol, CSS } = data?.Properties;
   const customStyle = parseFlexStyles(CSS);
   const font = findCurrentData(data.FontObj && data.FontObj);
+  const appDataMaxHeight = findCurrentData("app-data")?.Properties?.maxHeight || 50;
   const fontProperties = font && font?.Properties;
 
   const [tempDivWidth, setTempDivWidth] = useState("auto");
   const [divHeight, setDivHeight] = useState("auto");
-  const [maxHeight, setMaxHeight] = useState(100)
+  // const [maxHeight, setMaxHeight] = useState(100)
+  const maxHeight = useRef(appDataMaxHeight)
+  const heightPadding =35
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -27,14 +30,28 @@ const CustomRibbonGroup = ({ data }) => {
         let maxRibbonHeight = 0;
         let sumRibbonDivWidth = 0;
         let sumRibbonDivHeight = 0;
-
+        // let allTimeMaxHeight =0
+// console.log({maxRibbonHeight})
         ribbonElements.forEach((element) => {
-          const elementHeight = element.getBoundingClientRect().height || 0;
-          maxRibbonHeight = Math.max(maxRibbonHeight, elementHeight);
+          const elementHeight =((element.getBoundingClientRect().height) || 0 );
+          maxHeight.current = Math.max(maxHeight.current, elementHeight);
+          // console.log("elementHeight",{elementHeight, maxHeight:maxHeight.current})
         });
+        // console.log("Before Update - maxHeight:", maxHeight.current);
+        // if (maxRibbonHeight > 0) {
+        //   maxHeight.current = Math.max(maxRibbonHeight, maxHeight.current);
+        // }
 
-        setMaxHeight((prev)=>{Math.max(prev,maxRibbonHeight)})
-     
+        if(localStorage.getItem("maxHeight") && localStorage.getItem("maxHeight") < maxHeight.current){
+        localStorage.setItem("maxHeight", maxHeight.current+heightPadding);
+        // maxHeight.current =  maxHeight.current;
+        }
+        if(!localStorage.getItem("maxHeight")){
+          localStorage.setItem("maxHeight", maxHeight.current + heightPadding);
+        }
+        // console.log("After Update - maxHeight:", maxHeight.current, "appDataMaxHeight", appDataMaxHeight, "local",localStorage.getItem("maxHeight"));
+        
+        // console.log("ribbon elements",{ribbonElements,ribbonElementsWithoutId, maxRibbonHeight, maxHeight:localStorage.getItem("maxHeight") })
 
         ribbonElements.forEach((element) => {
           const elementWidth = element.getBoundingClientRect().width || 0;
@@ -60,17 +77,19 @@ const CustomRibbonGroup = ({ data }) => {
 
         }
         ribbonElementsWithoutId.forEach((element) => {
-          element.style.height = `${maxHeight+titleDivHeight+20}px`;
+          element.style.height = `${localStorage.getItem("maxHeight")}px`;
         });
+
+        
         // setDivHeight(`${maxRibbonHeight}px`);
-      }, 300);
+      }, 500);
     };
 
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
 
     return () => window.removeEventListener('resize', updateDimensions);
-  }, [data.ID, data.id]);
+  }, [data.id]);
   const size = Size || 2;
 
   // useEffect(() => {
@@ -104,7 +123,7 @@ const CustomRibbonGroup = ({ data }) => {
           border: `1px solid ${rgbColor(BorderCol)}`,
           borderTop: 0,
           position: 'relative',
-          height: divHeight+18,
+          height: divHeight,
           justifyContent: "space-around",
           paddingTop: "3px",
           ...customStyle,
