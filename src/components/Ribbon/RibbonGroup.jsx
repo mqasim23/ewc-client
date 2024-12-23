@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppData } from '../../hooks';
-import { excludeKeys, parseFlexStyles, rgbColor } from '../../utils';
+import { containsRibbonButton, excludeKeys, parseFlexStyles, rgbColor } from '../../utils';
 import SelectComponent from '../SelectComponent';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-bootstrap-ribbon/dist/react-bootstrap-ribbon.css';
+
 
 const CustomRibbonGroup = ({ data }) => {
   const { findCurrentData, fontScale, handleData } = useAppData();
@@ -11,14 +12,20 @@ const CustomRibbonGroup = ({ data }) => {
   const { Size, Title, BorderCol, CSS } = data?.Properties;
   const customStyle = parseFlexStyles(CSS);
   const font = findCurrentData(data.FontObj && data.FontObj);
-  const appDataMaxHeight = findCurrentData("app-data")?.Properties?.maxHeight || 50;
+  const appDataMaxHeight = findCurrentData("app-data")?.Properties?.maxHeight || 40;
+  const appData = findCurrentData("app-data")
   const fontProperties = font && font?.Properties;
 
   const [tempDivWidth, setTempDivWidth] = useState("auto");
   const [divHeight, setDivHeight] = useState("auto");
-  // const [maxHeight, setMaxHeight] = useState(100)
-  const maxHeight = useRef(appDataMaxHeight)
-  const heightPadding =35
+  const maxHeight = useRef(appDataMaxHeight);
+  const heightPadding = 20
+
+  useEffect(() => {
+    handleData({ ID: "app-data", Properties: { maxHeight: 50 } }, "WS");
+    maxHeight.current = 50;
+  }, [appData?.Properties?.tabID])
+
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -27,32 +34,14 @@ const CustomRibbonGroup = ({ data }) => {
         const ribbonElement = document.getElementById(`ribbon-item-height-${data.id}`);
         const ribbonElements = document.querySelectorAll(`[id^="ribbon-item-height-${data.id}"]`);
         const ribbonElementsWithoutId = document.querySelectorAll(`[id^="ribbon-height"]`);
-        let maxRibbonHeight = 0;
         let sumRibbonDivWidth = 0;
         let sumRibbonDivHeight = 0;
-        // let allTimeMaxHeight =0
-// console.log({maxRibbonHeight})
+      
         ribbonElements.forEach((element) => {
-          const elementHeight =((element.getBoundingClientRect().height) || 0 );
+          const elementHeight = ((element.getBoundingClientRect().height) || 0);
           maxHeight.current = Math.max(maxHeight.current, elementHeight);
-          // console.log("elementHeight",{elementHeight, maxHeight:maxHeight.current})
         });
-        // console.log("Before Update - maxHeight:", maxHeight.current);
-        // if (maxRibbonHeight > 0) {
-        //   maxHeight.current = Math.max(maxRibbonHeight, maxHeight.current);
-        // }
-
-        if(localStorage.getItem("maxHeight") && localStorage.getItem("maxHeight") < maxHeight.current){
-        localStorage.setItem("maxHeight", maxHeight.current+heightPadding);
-        // maxHeight.current =  maxHeight.current;
-        }
-        if(!localStorage.getItem("maxHeight")){
-          localStorage.setItem("maxHeight", maxHeight.current + heightPadding);
-        }
-        // console.log("After Update - maxHeight:", maxHeight.current, "appDataMaxHeight", appDataMaxHeight, "local",localStorage.getItem("maxHeight"));
-        
-        // console.log("ribbon elements",{ribbonElements,ribbonElementsWithoutId, maxRibbonHeight, maxHeight:localStorage.getItem("maxHeight") })
-
+  
         ribbonElements.forEach((element) => {
           const elementWidth = element.getBoundingClientRect().width || 0;
           sumRibbonDivWidth += elementWidth
@@ -66,9 +55,7 @@ const CustomRibbonGroup = ({ data }) => {
         const titleDivWidth = titleElement?.getBoundingClientRect().width || 0;
         const titleDivHeight = titleElement?.getBoundingClientRect().height || 0;
         const ribbonDivWidth = ribbonElement?.getBoundingClientRect().width || 0;
-        // const ribbonDivHeight = ribbonElement?.getBoundingClientRect().height || 0;
 
-        console.log("314",{maxRibbonHeight, titleDivHeight, })
 
         if (ribbonElements.length > 1) {
           setTempDivWidth(`${Math.max(tempWidth + ribbonDivWidth, titleDivWidth)}px`);
@@ -77,11 +64,11 @@ const CustomRibbonGroup = ({ data }) => {
 
         }
         ribbonElementsWithoutId.forEach((element) => {
-          element.style.height = `${localStorage.getItem("maxHeight")}px`;
+          element.style.height = `${maxHeight.current + titleDivHeight + heightPadding}px`;
         });
 
-        
-        // setDivHeight(`${maxRibbonHeight}px`);
+          handleData({ ID: "app-data", Properties: { maxHeight: Math.max(maxHeight.current, appDataMaxHeight) } }, "WS");
+          maxHeight.current = Math.max(maxHeight.current, appDataMaxHeight)
       }, 500);
     };
 
@@ -89,33 +76,8 @@ const CustomRibbonGroup = ({ data }) => {
     window.addEventListener('resize', updateDimensions);
 
     return () => window.removeEventListener('resize', updateDimensions);
-  }, [data.id]);
-  const size = Size || 2;
-
-  // useEffect(() => {
-  //   const updateDimensions = () => {
-  //     setTimeout(() => {
-  //       const ribbonElements = document.querySelectorAll('[id^="ribbon-height"]');
-  //       let maxRibbonHeight = 0;
-
-  //       ribbonElements.forEach((element) => {
-  //         const elementHeight = element.getBoundingClientRect().height || 0;
-  //         maxRibbonHeight = Math.max(maxRibbonHeight, elementHeight);
-  //       });
-
-  //       ribbonElements.forEach((element) => {
-  //         element.style.height = `${maxRibbonHeight+5}px`;
-  //       });
-  //     }, 600);
-  //   };
-
-  //   updateDimensions();
-  //   window.addEventListener("resize", updateDimensions);
-
-  //   return () => window.removeEventListener("resize", updateDimensions);
-  // }, []);
-
-
+  }, [appData?.Properties?.tabID]);
+ 
   return (
     <div id={data?.ID} style={{ width: tempDivWidth }}>
       <div
@@ -126,6 +88,7 @@ const CustomRibbonGroup = ({ data }) => {
           height: divHeight,
           justifyContent: "space-around",
           paddingTop: "3px",
+          alignItems: containsRibbonButton(data) ? "flex-start" : "center",
           ...customStyle,
         }}
         id={`ribbon-height`}

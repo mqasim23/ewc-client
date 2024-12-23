@@ -2,7 +2,7 @@ import { useAppData } from '../../hooks';
 import { handleMouseDoubleClick, handleMouseDown, handleMouseEnter, handleMouseLeave, handleMouseMove, handleMouseUp, handleMouseWheel, parseFlexStyles, rgbColor, setStyle } from '../../utils';
 
 const TabButton = ({ data, handleTabClick, activeTab, bgColor, fontColor, activebgColor }) => {
-  const { socket } = useAppData();
+  const { socket, handleData } = useAppData();
   const { Caption, Event , CSS} = data?.Properties;
 
   const emitEvent = Event && Event[0];
@@ -65,7 +65,7 @@ const TabButton = ({ data, handleTabClick, activeTab, bgColor, fontColor, active
             },
           })
         );
-
+        
         localStorage.setItem(
           'lastEvent',
           JSON.stringify({
@@ -77,6 +77,7 @@ const TabButton = ({ data, handleTabClick, activeTab, bgColor, fontColor, active
           })
         );
 
+        handleData({ID:"app-data", Properties:{TabID: data?.ID}}, "WS");
         socket.send(
           JSON.stringify({
             Event: {
@@ -86,7 +87,6 @@ const TabButton = ({ data, handleTabClick, activeTab, bgColor, fontColor, active
             },
           })
         );
-
         handleTabClick(data.ID);
       }}
     >

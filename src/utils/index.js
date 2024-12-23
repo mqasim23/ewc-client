@@ -622,3 +622,17 @@ export const getImageFromData = (data, ImageIndex) => {
   }
   return null;
 };
+
+
+
+export  function containsRibbonButton(data) {
+  if (typeof data !== "object" || data === null) {
+    return false; 
+  }
+
+  if (data.Type === "RibbonButton") {
+    return true;
+  }
+
+  return Object.values(data).some((value) => containsRibbonButton(value));
+}
